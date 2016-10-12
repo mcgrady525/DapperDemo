@@ -1,0 +1,102 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>新增</h2>
+<ul>
+    <li>
+        <input type="button" id="btnSingleInsert" name="btnSingleInsert" value="单条插入">
+    </li>
+    <li>
+        <input type="button" id="btnBulkInsert" name="btnBulkInsert" value="批量插入">
+    </li>
+</ul>
+
+<h2>查询</h2>
+<ul>
+    <li>
+        <input type="button" id="btnQuery1" name="btnQuery1" value="sql参数化查询">
+    </li>
+    <li>
+        <input type="button" id="btnQueryJoin" name="btnQueryJoin" value="联接查询">
+    </li>
+</ul>
+
+<h2>修改</h2>
+<ul>
+    <li>
+        <input type="button" id="btnUpdate" name="btnUpdate" value="更新">
+    </li>
+</ul>
+
+<h2>删除</h2>
+<ul>
+    <li>
+        <input type="button" id="btnSingleDelete" name="btnSingleDelete" value="单条删除">
+    </li>
+    <li>
+        <input type="button" id="btnBulkDelete" name="btnBulkDelete" value="批量删除">
+    </li>
+</ul>
+
+@if (false)
+{   
+    <script type="text/javascript" src="~/Scripts/jquery-1.10.2.min.js"></script>
+}
+
+<script type="text/javascript">
+    $(function () {
+        //查询
+        $("#btnQuery1").click(function () {
+            $.post('@Url.Action("Query", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //联接查询
+        $("#btnQueryJoin").click(function () {
+            $.post('@Url.Action("QueryJoin", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //单条插入
+        $("#btnSingleInsert").click(function () {
+            $.post('@Url.Action("InsertSingle", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //批量插入
+        $("#btnBulkInsert").click(function () {
+            $.post('@Url.Action("InsertBulk", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //更新
+        $("#btnUpdate").click(function () {
+            $.post('@Url.Action("Update", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //单条删除
+        $("#btnSingleDelete").click(function () {
+            $.post('@Url.Action("DeleteSingle", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //批量删除
+        $("#btnBulkDelete").click(function () {
+            $.post('@Url.Action("DeleteBulk", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+    });
+
+</script>
+
+
