@@ -75,7 +75,8 @@ namespace DapperDemo.Site.Controllers
         {
             using (var conn = DapperHelper.CreateConnection())
             {
-                var list = conn.Query<User>("SELECT * FROM dbo.t_sys_rights_user WHERE user_name= @UserName", new { UserName = "麦迪" });
+                var list = conn.Query<User>("SELECT id, user_id AS UserId, user_name AS UserName,email,address, enable_flag AS EnableFlag FROM dbo.t_sys_rights_user WHERE user_name= @UserName;", new { UserName = "麦迪" });
+                //var result = conn.Get<DapperDemo.Site.Models.User>(4);
             }
 
             return Content("OK!");

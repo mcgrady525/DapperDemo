@@ -19,14 +19,14 @@ namespace DapperDemo.Site.Common
         /// <returns></returns>
         public static IDbConnection CreateConnection()
         {
-            IDbConnection connection = new SqlConnection(ConfigHelper.GetConnectionString("DapperDemoDB"));
-            if (connection.State != ConnectionState.Open)
+            IDbConnection conn = new SqlConnection(ConfigHelper.GetConnectionString("DapperDemoDB"));
+            if (conn.State != ConnectionState.Open)
             {
-                connection.Close();
-                connection.Open();
+                conn.Close();
+                conn.Open();
             }
 
-            return connection;
+            return conn;
         }
 
     }

@@ -9,30 +9,32 @@ namespace DapperDemo.Site.Models
     /// <summary>
     /// 用户
     /// </summary>
-    [Table("")]
+    //[Table("t_sys_rights_user")]
     public partial class User
     {
         #region 基本属性
-        [Column("")]
-        public int Id { get; set; }
+        public virtual int Id { get; set; }
 
-        public string UserId { get; set; }
+        //[Column("user_id")]
+        public virtual string UserId { get; set; }
 
-        public string UserName { get; set; }
+        //[Column("user_name")]
+        public virtual string UserName { get; set; }
 
-        public string Email { get; set; }
+        public virtual string Email { get; set; }
 
-        public string Address { get; set; }
+        public virtual string Address { get; set; }
 
-        public bool? EnableFlag { get; set; } 
+        //[Column("enable_flag")]
+        public virtual bool? EnableFlag { get; set; } 
         #endregion
 
         /// <summary>
         /// 用户拥有的角色名称
         /// </summary>
+        //[IgnoreSelect]
+        //[NotMapped]
         public string RoleName { get; set; }
-
-        public string user_id { get; set; }
 
     }
 }
