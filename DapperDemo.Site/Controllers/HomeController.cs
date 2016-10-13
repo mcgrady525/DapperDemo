@@ -78,37 +78,29 @@ namespace DapperDemo.Site.Controllers
             using (var conn = DapperHelper.CreateConnection())
             {
                 var list = conn.Query<User>("SELECT id, user_id AS UserId, user_name AS UserName,email,address, enable_flag AS EnableFlag FROM dbo.t_sys_rights_user WHERE user_name= @UserName;", new { UserName = "麦迪" });
-                //var result = conn.Get<DapperDemo.Site.Models.User>(4);
             }
 
             return Content("OK!");
         }
 
         /// <summary>
-        /// 联表查询
+        /// 多表查询
         /// </summary>
         /// <returns></returns>
         [HttpPost]
         public ActionResult QueryJoin()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var sql = @"SELECT rightsUser.id,rightsUser.user_id,rightsUser.user_name, role.role_name FROM dbo.t_sys_rights_user AS rightsUser
-                    LEFT JOIN dbo.t_sys_rights_user_role AS userRole ON rightsUser.id = userRole.user_id
-                    LEFT JOIN dbo.t_sys_rights_role AS role ON userRole.role_id = role.id
-                    WHERE rightsUser.id= 1;";
-            var list = connection.Query<dynamic>(sql);
-            var result = new List<User>();
-            foreach (var row in list)
+            using (var conn = DapperHelper.CreateConnection())
             {
-                //这里是否有办法优化?
-                var fields = row as IDictionary<string, object>;
-                result.Add(new User
+                var sql = @"SELECT rightsUser.id,rightsUser.user_id AS UserId,rightsUser.user_name AS UserName, role.role_name AS RoleName FROM dbo.t_sys_rights_user AS rightsUser
+                                    LEFT JOIN dbo.t_sys_rights_user_role AS userRole ON rightsUser.id = userRole.user_id
+                                    LEFT JOIN dbo.t_sys_rights_role AS role ON userRole.role_id = role.id
+                                    WHERE rightsUser.id= 1;";
+                var r = conn.Query<DapperDemo.Site.Models.User, DapperDemo.Site.Models.UserRole, DapperDemo.Site.Models.Role, DapperDemo.Site.Models.User>(sql, (user, userRole, role) =>
                 {
-                    Id = (int)fields["id"],
-                    UserId = (string)fields["user_id"],
-                    UserName = (string)fields["user_name"],
-                    RoleName = (string)fields["role_name"]
-                });
+                    user.RoleName = role.RoleName;
+                    return user;
+                }, splitOn: "id, id").ToList();
             }
 
             return Content("OK!");

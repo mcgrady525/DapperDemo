@@ -20,12 +20,6 @@ namespace DapperDemo.Site.Common
         public static IDbConnection CreateConnection()
         {
             IDbConnection conn = new SqlConnection(ConfigHelper.GetConnectionString("DapperDemoDB"));
-            if (conn.State != ConnectionState.Open)
-            {
-                conn.Close();
-                conn.Open();
-            }
-
             return conn;
         }
 
