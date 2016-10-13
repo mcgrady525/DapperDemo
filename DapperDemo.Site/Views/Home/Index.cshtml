@@ -39,6 +39,13 @@
     </li>
 </ul>
 
+<h2>事务</h2>
+<ul>
+    <li>
+        <input type="button" id="btnTransaction" name="btnTransaction" value="事务测试">
+    </li>
+</ul>
+
 @if (false)
 {   
     <script type="text/javascript" src="~/Scripts/jquery-1.10.2.min.js"></script>
@@ -91,6 +98,13 @@
         //批量删除
         $("#btnBulkDelete").click(function () {
             $.post('@Url.Action("DeleteBulk", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        //事务
+        $("#btnTransaction").click(function () {
+            $.post('@Url.Action("TestTransaction", "Home")', function (data) {
                 alert(data);
             });
         });

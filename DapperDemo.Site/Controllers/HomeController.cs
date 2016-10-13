@@ -47,7 +47,6 @@ namespace DapperDemo.Site.Controllers
         [HttpPost]
         public ActionResult InsertBulk()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
             var users = new List<User> { };
             for (int i = 0; i < 5; i++)
             {
@@ -61,7 +60,10 @@ namespace DapperDemo.Site.Controllers
                 });
             }
 
-            var result = connection.Execute("INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", users);
+            using (var conn = DapperHelper.CreateConnection())
+            {
+                var result = conn.Execute("INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", users);
+            }
 
             return Content("OK!");
         }
@@ -100,14 +102,14 @@ namespace DapperDemo.Site.Controllers
             {
                 //这里是否有办法优化?
                 var fields = row as IDictionary<string, object>;
-                result.Add(new User 
+                result.Add(new User
                 {
-                    Id= (int)fields["id"],
-                    UserId= (string)fields["user_id"],
+                    Id = (int)fields["id"],
+                    UserId = (string)fields["user_id"],
                     UserName = (string)fields["user_name"],
                     RoleName = (string)fields["role_name"]
                 });
-            }            
+            }
 
             return Content("OK!");
         }
@@ -146,8 +148,37 @@ namespace DapperDemo.Site.Controllers
         public ActionResult DeleteBulk()
         {
             IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var ids = new List<int> {7,6 };
+            var ids = new List<int> { 7, 6 };
             var result = connection.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id IN @Ids;", new { Ids = ids });
+
+            return Content("OK!");
+        }
+
+        /// <summary>
+        /// 事务
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult TestTransaction()
+        {
+            using (var conn = DapperHelper.CreateConnection())
+            {
+                var trans = conn.BeginTransaction();
+                try
+                {
+                    var r1 = conn.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id= @Id;", new { Id = 6 }, trans);
+
+                    throw new Exception("事务测试!");
+
+                    var r2 = conn.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id= @Id;", new { Id = 7 }, trans);
+
+                    trans.Commit();
+                }
+                catch (Exception ex)
+                {
+                    trans.Rollback();
+                }
+            }
 
             return Content("OK!");
         }
