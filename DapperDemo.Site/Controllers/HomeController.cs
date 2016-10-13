@@ -7,6 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using Dapper;
 using DapperDemo.Site.Models;
+using DapperDemo.Site.Common;
 
 namespace DapperDemo.Site.Controllers
 {
@@ -72,8 +73,10 @@ namespace DapperDemo.Site.Controllers
         [HttpPost]
         public ActionResult Query()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var list = connection.Query<User>("SELECT * FROM dbo.t_sys_rights_user WHERE user_name= @UserName", new { UserName = "麦迪" });
+            using (var conn = DapperHelper.CreateConnection())
+            {
+                var list = conn.Query<User>("SELECT * FROM dbo.t_sys_rights_user WHERE user_name= @UserName", new { UserName = "麦迪" });
+            }
 
             return Content("OK!");
         }
