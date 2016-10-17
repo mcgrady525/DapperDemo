@@ -1,6 +1,6 @@
 /*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     2016/10/12 11:54:36                          */
+/* Created on:     2016/10/17 15:15:00                          */
 /*==============================================================*/
 
 
@@ -82,6 +82,101 @@ select @CurrentUser = user_name()
 execute sp_addextendedproperty 'MS_Description',  
    '用户表', 
    'user', @CurrentUser, 'table', 't_sys_rights_user'
+go
+
+if exists(select 1 from sys.extended_properties p where
+      p.major_id = object_id('t_sys_rights_user')
+  and p.minor_id = (select c.column_id from sys.columns c where c.object_id = p.major_id and c.name = 'user_id')
+)
+begin
+   declare @CurrentUser sysname
+select @CurrentUser = user_name()
+execute sp_dropextendedproperty 'MS_Description', 
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'user_id'
+
+end
+
+
+select @CurrentUser = user_name()
+execute sp_addextendedproperty 'MS_Description', 
+   '登录id',
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'user_id'
+go
+
+if exists(select 1 from sys.extended_properties p where
+      p.major_id = object_id('t_sys_rights_user')
+  and p.minor_id = (select c.column_id from sys.columns c where c.object_id = p.major_id and c.name = 'user_name')
+)
+begin
+   declare @CurrentUser sysname
+select @CurrentUser = user_name()
+execute sp_dropextendedproperty 'MS_Description', 
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'user_name'
+
+end
+
+
+select @CurrentUser = user_name()
+execute sp_addextendedproperty 'MS_Description', 
+   '登录名',
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'user_name'
+go
+
+if exists(select 1 from sys.extended_properties p where
+      p.major_id = object_id('t_sys_rights_user')
+  and p.minor_id = (select c.column_id from sys.columns c where c.object_id = p.major_id and c.name = 'email')
+)
+begin
+   declare @CurrentUser sysname
+select @CurrentUser = user_name()
+execute sp_dropextendedproperty 'MS_Description', 
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'email'
+
+end
+
+
+select @CurrentUser = user_name()
+execute sp_addextendedproperty 'MS_Description', 
+   '邮箱',
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'email'
+go
+
+if exists(select 1 from sys.extended_properties p where
+      p.major_id = object_id('t_sys_rights_user')
+  and p.minor_id = (select c.column_id from sys.columns c where c.object_id = p.major_id and c.name = 'address')
+)
+begin
+   declare @CurrentUser sysname
+select @CurrentUser = user_name()
+execute sp_dropextendedproperty 'MS_Description', 
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'address'
+
+end
+
+
+select @CurrentUser = user_name()
+execute sp_addextendedproperty 'MS_Description', 
+   '邮件地址',
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'address'
+go
+
+if exists(select 1 from sys.extended_properties p where
+      p.major_id = object_id('t_sys_rights_user')
+  and p.minor_id = (select c.column_id from sys.columns c where c.object_id = p.major_id and c.name = 'enable_flag')
+)
+begin
+   declare @CurrentUser sysname
+select @CurrentUser = user_name()
+execute sp_dropextendedproperty 'MS_Description', 
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'enable_flag'
+
+end
+
+
+select @CurrentUser = user_name()
+execute sp_addextendedproperty 'MS_Description', 
+   '是否启用。Y表示启用，N表示禁用。',
+   'user', @CurrentUser, 'table', 't_sys_rights_user', 'column', 'enable_flag'
 go
 
 /*==============================================================*/
