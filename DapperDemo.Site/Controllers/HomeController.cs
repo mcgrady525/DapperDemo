@@ -9,6 +9,8 @@ using Dapper;
 using DapperDemo.Site.Models;
 using DapperDemo.Site.Common;
 using System.Text;
+using StackExchange.Profiling;
+using StackExchange.Profiling.Data;
 
 namespace DapperDemo.Site.Controllers
 {
@@ -36,7 +38,7 @@ namespace DapperDemo.Site.Controllers
                 Address = "中国北京111",
                 EnableFlag = true
             });
-            using (var conn= DapperHelper.CreateConnection())
+            using (var conn = DapperHelper.CreateConnection())
             {
                 conn.Execute(@"INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", p);
             }
@@ -197,14 +199,25 @@ namespace DapperDemo.Site.Controllers
             if (!string.IsNullOrEmpty(request.UserId))
             {
                 sbSql.Append(" and users.user_id LIKE @UserId");
-                paras.Add("UserId", "%"+request.UserId+"%");
+                paras.Add("UserId", "%" + request.UserId + "%");
             }
 
-            using (var conn= DapperHelper.CreateConnection())
+            //MiniProfiler
+            var conn = new ProfiledDbConnection(new SqlConnection(ConfigHelper.GetConnectionString("DapperDemoDB")), MiniProfiler.Current);
+            if (conn.State != ConnectionState.Open)
             {
-                var query = conn.Query<DapperDemo.Site.Models.User>(sbSql.ToString(), paras);
-                var result = query.ToList();
+                conn.Close();
+                conn.Open();
             }
+            var query = conn.Query<DapperDemo.Site.Models.User>(sbSql.ToString(), paras);
+            var result = query.ToList();
+
+
+            //using (var conn = DapperHelper.CreateConnection())
+            //{
+            //    var query = conn.Query<DapperDemo.Site.Models.User>(sbSql.ToString(), paras);
+            //    var result = query.ToList();
+            //}
 
             return Content("OK!");
         }

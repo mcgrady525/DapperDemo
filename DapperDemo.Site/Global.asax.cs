@@ -1,3 +1,4 @@
+using StackExchange.Profiling;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,15 @@ namespace DapperDemo.Site
         {
             AreaRegistration.RegisterAllAreas();
             RouteConfig.RegisterRoutes(RouteTable.Routes);
+        }
+
+        protected void Application_BeginRequest(Object source, EventArgs e)
+        {
+            MiniProfiler.Start();
+        }
+        protected void Application_EndRequest()
+        {
+            MiniProfiler.Stop();
         }
     }
 }
