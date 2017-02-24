@@ -8,6 +8,7 @@ using System.Web.Mvc;
 using Dapper;
 using DapperDemo.Site.Models;
 using DapperDemo.Site.Common;
+using System.Text;
 
 namespace DapperDemo.Site.Controllers
 {
@@ -27,15 +28,18 @@ namespace DapperDemo.Site.Controllers
         [HttpPost]
         public ActionResult InsertSingle()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var result = connection.Execute("INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", new
+            var p = new DynamicParameters(new
             {
                 UserId = "zhangsan",
-                UserName = "张三",
+                UserName = "张三111",
                 Email = "zhangsan@qq.com",
-                Address = "中国北京",
+                Address = "中国北京111",
                 EnableFlag = true
             });
+            using (var conn= DapperHelper.CreateConnection())
+            {
+                conn.Execute(@"INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", p);
+            }
 
             return Content("OK!");
         }
@@ -77,7 +81,7 @@ namespace DapperDemo.Site.Controllers
         {
             using (var conn = DapperHelper.CreateConnection())
             {
-                var list = conn.Query<User>("SELECT id, user_id AS UserId, user_name AS UserName,email,address, enable_flag AS EnableFlag FROM dbo.t_sys_rights_user WHERE user_name= @UserName;", new { UserName = "麦迪" });
+                var list = conn.Query<User>("SELECT id, user_id AS UserId, user_name AS UserName,email,address, enable_flag AS EnableFlag FROM dbo.t_sys_rights_user WHERE user_name= @UserName;", new { @UserName = "麦迪" });
             }
 
             return Content("OK!");
@@ -170,6 +174,36 @@ namespace DapperDemo.Site.Controllers
                 {
                     trans.Rollback();
                 }
+            }
+
+            return Content("OK!");
+        }
+
+        /// <summary>
+        /// 动态参数查询
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult TestDynamicParametersQuery()
+        {
+            var request = new DapperDemo.Site.Models.User
+            {
+                UserId = "userId"
+            };
+
+            var paras = new DynamicParameters();
+            StringBuilder sbSql = new StringBuilder("SELECT users.user_id AS UserId, users.user_name AS UserName, users.enable_flag AS EnableFlag, * FROM dbo.t_sys_rights_user AS users where 1=1");
+
+            if (!string.IsNullOrEmpty(request.UserId))
+            {
+                sbSql.Append(" and users.user_id LIKE @UserId");
+                paras.Add("UserId", "%"+request.UserId+"%");
+            }
+
+            using (var conn= DapperHelper.CreateConnection())
+            {
+                var query = conn.Query<DapperDemo.Site.Models.User>(sbSql.ToString(), paras);
+                var result = query.ToList();
             }
 
             return Content("OK!");

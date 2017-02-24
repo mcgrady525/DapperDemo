@@ -3,6 +3,7 @@
 }
 
 <h2>新增</h2>
+<p>对象或匿名对象自动绑定</p>
 <ul>
     <li>
         <input type="button" id="btnSingleInsert" name="btnSingleInsert" value="单条插入">
@@ -13,9 +14,10 @@
 </ul>
 
 <h2>查询</h2>
+<p>参数化自动解析</p>
 <ul>
     <li>
-        <input type="button" id="btnQuery1" name="btnQuery1" value="sql参数化查询">
+        <input type="button" id="btnQuery1" name="btnQuery1" value="参数化查询">
     </li>
     <li>
         <input type="button" id="btnQueryJoin" name="btnQueryJoin" value="多表查询">
@@ -43,6 +45,14 @@
 <ul>
     <li>
         <input type="button" id="btnTransaction" name="btnTransaction" value="事务测试">
+    </li>
+</ul>
+
+<h2>动态参数化查询</h2>
+<p>DynamicParameters</p>
+<ul>
+    <li>
+        <input type="button" id="btnDynamicParametersQuery" name="btnDynamicParametersQuery" value="动态参数化查询">
     </li>
 </ul>
 
@@ -108,6 +118,14 @@
                 alert(data);
             });
         });
+
+        //btnDynamicParametersQuery
+        $("#btnDynamicParametersQuery").click(function () {
+            $.post('@Url.Action("TestDynamicParametersQuery", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
 
     });
 
