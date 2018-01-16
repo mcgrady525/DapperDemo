@@ -14,6 +14,19 @@ using StackExchange.Profiling.Data;
 
 namespace DapperDemo.Site.Controllers
 {
+    /// <summary>
+    /// dapper原生示例
+    /// *单条插入
+    /// *批量插入，两种方法(dapper自带和SqlBulkCopy)
+    /// *查询，单表和多表
+    /// *更新
+    /// *单条删除
+    /// *批量删除
+    /// *事务
+    /// *调用存储过程
+    /// *单查询多结果集
+    /// *多数据库连接
+    /// </summary>
     public class HomeController : Controller
     {
         //
