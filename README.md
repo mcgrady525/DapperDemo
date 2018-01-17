@@ -1,7 +1,7 @@
 # DapperDemo
 ## dapper原生示例
-. 单条插入
-. 批量插入(dapper自带)
+- 单条插入
+- 批量插入(dapper自带)
 . 批量插入(使用SqlBulkCopy)
 . 查询(单表)
 . 查询(多表)
