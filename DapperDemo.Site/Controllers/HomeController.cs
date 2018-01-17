@@ -11,6 +11,7 @@ using DapperDemo.Site.Common;
 using System.Text;
 using StackExchange.Profiling;
 using StackExchange.Profiling.Data;
+using SSharing.Frameworks.Common.Extends;
 
 namespace DapperDemo.Site.Controllers
 {
@@ -24,8 +25,9 @@ namespace DapperDemo.Site.Controllers
     /// *批量删除
     /// *事务
     /// *调用存储过程
-    /// *单查询多结果集
-    /// *多数据库连接
+    /// *多结果集
+    /// *动态参数
+    /// *多数据库查询
     /// </summary>
     public class HomeController : Controller
     {
@@ -36,95 +38,141 @@ namespace DapperDemo.Site.Controllers
             return View();
         }
 
+        #region 插入
         /// <summary>
         /// 单条插入
+        /// insert列要跟值对应
         /// </summary>
         /// <returns></returns>
         [HttpPost]
         public ActionResult InsertSingle()
         {
-            var p = new DynamicParameters(new
+            var fltOrder = new TFltOrder
             {
-                UserId = "zhangsan",
-                UserName = "张三111",
-                Email = "zhangsan@qq.com",
-                Address = "中国北京111",
-                EnableFlag = true
-            });
-            using (var conn = DapperHelper.CreateConnection())
+                OrderNo = "201801170003",
+                Status = "TicketIssued",
+                PaymentAmt = 510,
+                CreatedTime = DateTime.Now
+            };
+
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
-                conn.Execute(@"INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", p);
+                conn.Execute(@"INSERT INTO dbo.t_flt_order VALUES ( @OrderNo,@Status ,@PaymentAmt ,@CreatedTime);", fltOrder);
             }
 
             return Content("OK!");
         }
 
         /// <summary>
-        /// 批量插入
+        /// 批量插入(dapper自带)
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult InsertBulk()
+        public ActionResult InsertBulkByDefault()
         {
-            var users = new List<User> { };
-            for (int i = 0; i < 5; i++)
+            var fltOrders = new List<TFltOrder>();
+            for (int i = 4; i < 10; i++)
             {
-                users.Add(new User
+                fltOrders.Add(new TFltOrder
                 {
-                    UserId = "userId" + i,
-                    UserName = "userName" + i,
-                    Email = "email" + i,
-                    Address = "address" + i,
-                    EnableFlag = true
+                    OrderNo = "20180117000" + i,
+                    Status = "Changed",
+                    PaymentAmt = 1000,
+                    CreatedTime = DateTime.Now
                 });
             }
 
-            using (var conn = DapperHelper.CreateConnection())
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
-                var result = conn.Execute("INSERT INTO dbo.t_sys_rights_user VALUES (@UserId, @UserName, @Email, @Address, @EnableFlag)", users);
+                conn.Execute(@"INSERT INTO dbo.t_flt_order VALUES ( @OrderNo,@Status ,@PaymentAmt ,@CreatedTime);", fltOrders);
             }
 
             return Content("OK!");
         }
 
         /// <summary>
-        /// 查询
+        /// 批量插入(使用SqlBulkCopy)
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult Query()
+        public ActionResult InsertBulkBySqlBulkCopy()
         {
-            using (var conn = DapperHelper.CreateConnection())
+            var fltOrders = new List<TFltOrder>();
+            for (int i = 10; i < 20; i++)
             {
-                var list = conn.Query<User>("SELECT id, user_id AS UserId, user_name AS UserName,email,address, enable_flag AS EnableFlag FROM dbo.t_sys_rights_user WHERE user_name= @UserName;", new { @UserName = "麦迪" });
-            }
-
-            return Content("OK!");
-        }
-
-        /// <summary>
-        /// 多表查询
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost]
-        public ActionResult QueryJoin()
-        {
-            using (var conn = DapperHelper.CreateConnection())
-            {
-                var sql = @"SELECT rightsUser.id,rightsUser.user_id AS UserId,rightsUser.user_name AS UserName, role.role_name AS RoleName FROM dbo.t_sys_rights_user AS rightsUser
-                                    LEFT JOIN dbo.t_sys_rights_user_role AS userRole ON rightsUser.id = userRole.user_id
-                                    LEFT JOIN dbo.t_sys_rights_role AS role ON userRole.role_id = role.id
-                                    WHERE rightsUser.id= 1;";
-                var r = conn.Query<DapperDemo.Site.Models.User, DapperDemo.Site.Models.UserRole, DapperDemo.Site.Models.Role, DapperDemo.Site.Models.User>(sql, (user, userRole, role) =>
+                fltOrders.Add(new TFltOrder
                 {
-                    user.RoleName = role.RoleName;
-                    return user;
-                }, splitOn: "id, id").ToList();
+                    OrderNo = "2018011700" + i,
+                    Status = "TicketIssued",
+                    PaymentAmt = 1100,
+                    CreatedTime = DateTime.Now
+                });
+            }
+
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                //list转DataTable
+                var dt = DapperHelper.ConvertToDataTable(fltOrders);
+
+                using (var sqlbulkcopy = new SqlBulkCopy((SqlConnection)conn))
+                {
+                    sqlbulkcopy.BatchSize = fltOrders.Count;
+                    sqlbulkcopy.DestinationTableName = "t_flt_order";//tableName
+                    for (var i = 0; i < dt.Columns.Count; i++)
+                    {
+                        sqlbulkcopy.ColumnMappings.Add(dt.Columns[i].ColumnName, dt.Columns[i].ColumnName);
+                    }
+                    sqlbulkcopy.WriteToServer(dt);
+                }
+            }
+
+            return Content("OK!");
+        }
+        #endregion
+
+        #region 查询
+        /// <summary>
+        /// 查询(单表)
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult QuerySingleTable()
+        {
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                var fltOrder = conn.Query<TFltOrder>(@"SELECT order_no AS OrderNo,payment_amt AS PaymentAmt, created_time AS CreatedTime, * FROM dbo.t_flt_order WHERE id= @Id;", new { @Id = 10 });
             }
 
             return Content("OK!");
         }
 
+        /// <summary>
+        /// 查询(多表)
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult QueryMultiTable()
+        {
+            //查询订单id为10和11的订单信息，包括：订单号，订单状态，乘机人姓名和乘机人性别
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                var query = conn.Query<TFltOrderPassenger, TFltOrder, TFltOrderPassenger>(@"SELECT orderPassenger.passenger_name AS PassengerName, orderPassenger.passenger_gender AS PassengerGender,fltOrder.order_no AS OrderNo, fltOrder.status
+                    FROM dbo.t_flt_order_passenger (NOLOCK) AS orderPassenger
+                        LEFT JOIN dbo.t_flt_order (NOLOCK) AS fltOrder
+                            ON fltOrder.id = orderPassenger.order_id
+                    WHERE fltOrder.order_no IN ( '201801170009', '201801170010' );", (orderPassenger, fltOrder) =>
+                {
+                    orderPassenger.FltOrder = fltOrder;
+                    return orderPassenger;
+                }, splitOn: "OrderNo");
+                var rs = query.ToList();
+            }
+
+            return Content("OK!");
+        }
+        #endregion
+
+        #region 更新
         /// <summary>
         /// 更新
         /// </summary>
@@ -132,12 +180,16 @@ namespace DapperDemo.Site.Controllers
         [HttpPost]
         public ActionResult Update()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var result = connection.Execute("UPDATE dbo.t_sys_rights_user SET email= N'mcgrady@qq.com' WHERE id= @Id;", new { Id = 2 });
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                var rs = conn.Execute(@"UPDATE dbo.t_flt_order SET payment_amt= 2000, created_time= GETDATE() WHERE id= @Id;", new { @Id = 2 });
+            }
 
             return Content("OK!");
         }
+        #endregion
 
+        #region 删除
         /// <summary>
         /// 单条删除
         /// </summary>
@@ -145,8 +197,10 @@ namespace DapperDemo.Site.Controllers
         [HttpPost]
         public ActionResult DeleteSingle()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var result = connection.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id= @Id;", new { Id = 11 });
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                var rs = conn.Execute(@"DELETE FROM dbo.t_flt_order WHERE order_no= @OrderNo;", new { @OrderNo = "201801170019" });
+            }
 
             return Content("OK!");
         }
@@ -156,32 +210,36 @@ namespace DapperDemo.Site.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult DeleteBulk()
+        public ActionResult DeleteBatch()
         {
-            IDbConnection connection = new SqlConnection("Data Source=.;Initial Catalog=DapperStudyDB;Integrated Security=True;MultipleActiveResultSets=True");
-            var ids = new List<int> { 7, 6 };
-            var result = connection.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id IN @Ids;", new { Ids = ids });
+            var orderNos = new List<string> { "201801170018", "201801170017" };
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                var rs = conn.Execute(@"DELETE FROM dbo.t_flt_order WHERE order_no in @OrderNos;", new { @OrderNos = orderNos });
+            }
 
             return Content("OK!");
         }
+        #endregion
 
+        #region 事务
         /// <summary>
         /// 事务
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult TestTransaction()
+        public ActionResult DoTransaction()
         {
-            using (var conn = DapperHelper.CreateConnection())
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
                 var trans = conn.BeginTransaction();
                 try
                 {
-                    var r1 = conn.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id= @Id;", new { Id = 6 }, trans);
+                    var r1 = conn.Execute("DELETE FROM dbo.t_flt_order WHERE order_no= @OrderNo;", new { @OrderNo = "201801170001" }, trans);
 
-                    throw new Exception("事务测试!");
+                    throw new Exception("测试事务!");
 
-                    var r2 = conn.Execute("DELETE FROM dbo.t_sys_rights_user WHERE id= @Id;", new { Id = 7 }, trans);
+                    var r2 = conn.Execute("DELETE FROM dbo.t_flt_order WHERE order_no= @OrderNo;", new { @OrderNo = "201801170002" }, trans);
 
                     trans.Commit();
                 }
@@ -193,49 +251,89 @@ namespace DapperDemo.Site.Controllers
 
             return Content("OK!");
         }
+        #endregion
 
+        #region 调用存储过程
         /// <summary>
-        /// 动态参数查询
+        /// 存储过程
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult TestDynamicParametersQuery()
+        public ActionResult DoStoredProcs()
         {
-            var request = new DapperDemo.Site.Models.User
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
-                UserId = "userId"
-            };
-
-            var paras = new DynamicParameters();
-            StringBuilder sbSql = new StringBuilder("SELECT users.user_id AS UserId, users.user_name AS UserName, users.enable_flag AS EnableFlag, * FROM dbo.t_sys_rights_user AS users where 1=1");
-
-            if (!string.IsNullOrEmpty(request.UserId))
-            {
-                sbSql.Append(" and users.user_id LIKE @UserId");
-                paras.Add("UserId", "%" + request.UserId + "%");
+                var rs = conn.Query<TFltOrder>("usp_GetFltOrderByOrderNo", new { @OrderNo = "201801170001" }, commandType: CommandType.StoredProcedure);
             }
 
-            //MiniProfiler
-            var conn = new ProfiledDbConnection(new SqlConnection(ConfigHelper.GetConnectionString("DapperDemoDB")), MiniProfiler.Current);
-            if (conn.State != ConnectionState.Open)
+            return Content("OK!");
+        } 
+        #endregion
+
+        /// <summary>
+        /// 多结果集
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult MultiResults()
+        {
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
-                conn.Close();
-                conn.Open();
+                using (var multi = conn.QueryMultiple(@"SELECT order_no AS OrderNo, payment_amt AS PaymentAmt, created_time AS CreatedTime, * FROM dbo.t_flt_order;
+SELECT order_id AS OrderId, passenger_name AS PassengerName, passenger_gender AS PassengerGender, created_time AS CreatedTime, * FROM dbo.t_flt_order_passenger;"))
+                {
+                    var fltOrders = multi.Read<TFltOrder>().ToList();
+                    var orderPassengers = multi.Read<TFltOrderPassenger>().ToList();
+                }
             }
-            var query = conn.Query<DapperDemo.Site.Models.User>(sbSql.ToString(), paras);
-            var result = query.ToList();
-
-
-            //using (var conn = DapperHelper.CreateConnection())
-            //{
-            //    var query = conn.Query<DapperDemo.Site.Models.User>(sbSql.ToString(), paras);
-            //    var result = query.ToList();
-            //}
 
             return Content("OK!");
         }
 
+        /// <summary>
+        /// 动态参数
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult DoDynamicParameters()
+        {
+            // 主要用于sql拼接
+            var fltOrder = new TFltOrder { OrderNo = "201801170002" };
 
+            var paras = new DynamicParameters();
+            var sbSql = new StringBuilder();
+            sbSql.Append("SELECT order_no AS OrderNo, payment_amt AS PaymentAmt, created_time AS CreatedTime, * FROM dbo.t_flt_order WHERE 1=1");
 
+            if (!fltOrder.OrderNo.IsNullOrEmpty())
+            {
+                sbSql.Append(" AND order_no= @OrderNo");
+                paras.Add("OrderNo", fltOrder.OrderNo, DbType.String);
+            }
+
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
+            {
+                var query = conn.Query<TFltOrder>(sbSql.ToString(), paras);
+                var rs = query.ToList();
+            }
+
+            return Content("OK!");
+        }
+
+        /// <summary>
+        /// 多数据库查询
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult DoMultiDbQuery()
+        {
+            using (var conn = DapperHelper.CreateDbConnection("DapperDemo2DB"))
+            {
+                var query = conn.Query<TFltOrder>(@"SELECT order_no AS OrderNo,payment_amt AS PaymentAmt, created_time AS CreatedTime, * FROM dbo.t_flt_order WHERE order_no= @OrderNo;", new { @OrderNo= "201801170002" });
+                var fltOrder = query.FirstOrDefault();
+            }
+
+            return Content("OK!");
+        }
+        
     }
 }

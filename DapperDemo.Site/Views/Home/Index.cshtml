@@ -2,29 +2,30 @@
     ViewBag.Title = "Index";
 }
 
-<h2>新增</h2>
-<p>对象或匿名对象自动绑定</p>
+<h2>插入</h2>
 <ul>
     <li>
         <input type="button" id="btnSingleInsert" name="btnSingleInsert" value="单条插入">
     </li>
     <li>
-        <input type="button" id="btnBulkInsert" name="btnBulkInsert" value="批量插入">
+        <input type="button" id="btnBulkInsert1" name="btnBulkInsert1" value="批量插入(dapper自带)">
+    </li>
+    <li>
+        <input type="button" id="btnBulkInsert2" name="btnBulkInsert2" value="批量插入(使用SqlBulkCopy)">
     </li>
 </ul>
 
 <h2>查询</h2>
-<p>参数化自动解析</p>
 <ul>
     <li>
-        <input type="button" id="btnQuery1" name="btnQuery1" value="参数化查询">
+        <input type="button" id="btnQuerySingleTable" name="btnQuerySingleTable" value="查询(单表)">
     </li>
     <li>
-        <input type="button" id="btnQueryJoin" name="btnQueryJoin" value="多表查询">
+        <input type="button" id="btnQueryMultiTable" name="btnQueryMultiTable" value="查询(多表)">
     </li>
 </ul>
 
-<h2>修改</h2>
+<h2>更新</h2>
 <ul>
     <li>
         <input type="button" id="btnUpdate" name="btnUpdate" value="更新">
@@ -34,25 +35,45 @@
 <h2>删除</h2>
 <ul>
     <li>
-        <input type="button" id="btnSingleDelete" name="btnSingleDelete" value="单条删除">
+        <input type="button" id="btnDeleteSingle" name="btnDeleteSingle" value="单条删除">
     </li>
     <li>
-        <input type="button" id="btnBulkDelete" name="btnBulkDelete" value="批量删除">
+        <input type="button" id="btnDeleteBatch" name="btnDeleteBatch" value="批量删除">
     </li>
 </ul>
 
 <h2>事务</h2>
 <ul>
     <li>
-        <input type="button" id="btnTransaction" name="btnTransaction" value="事务测试">
+        <input type="button" id="btnDoTransaction" name="btnDoTransaction" value="测试事务">
     </li>
 </ul>
 
-<h2>动态参数化查询</h2>
-<p>DynamicParameters</p>
+<h2>调用存储过程</h2>
 <ul>
     <li>
-        <input type="button" id="btnDynamicParametersQuery" name="btnDynamicParametersQuery" value="动态参数化查询">
+        <input type="button" id="btnDoStoredProcs" name="btnDoStoredProcs" value="调用存储过程">
+    </li>
+</ul>
+
+<h2>多结果集</h2>
+<ul>
+    <li>
+        <input type="button" id="btnMultiResults" name="btnMultiResults" value="多结果集">
+    </li>
+</ul>
+
+<h2>动态参数</h2>
+<ul>
+    <li>
+        <input type="button" id="btnDoDynamicParameters" name="btnDoDynamicParameters" value="动态参数">
+    </li>
+</ul>
+
+<h2>多数据库查询</h2>
+<ul>
+    <li>
+        <input type="button" id="btnDoMultiDbQuery" name="btnDoMultiDbQuery" value="多数据库查询">
     </li>
 </ul>
 
@@ -63,69 +84,96 @@
 
 <script type="text/javascript">
     $(function () {
-        //查询
-        $("#btnQuery1").click(function () {
-            $.post('@Url.Action("Query", "Home")', function (data) {
-                alert(data);
-            });
-        });
-
-        //联接查询
-        $("#btnQueryJoin").click(function () {
-            $.post('@Url.Action("QueryJoin", "Home")', function (data) {
-                alert(data);
-            });
-        });
-
-        //单条插入
+        // 单条插入
         $("#btnSingleInsert").click(function () {
             $.post('@Url.Action("InsertSingle", "Home")', function (data) {
                 alert(data);
             });
         });
 
-        //批量插入
-        $("#btnBulkInsert").click(function () {
-            $.post('@Url.Action("InsertBulk", "Home")', function (data) {
+        // 批量插入(dapper自带)
+        $("#btnBulkInsert1").click(function () {
+            $.post('@Url.Action("InsertBulkByDefault", "Home")', function (data) {
                 alert(data);
             });
         });
 
-        //更新
+        // 批量插入(使用SqlBulkCopy)
+        $("#btnBulkInsert2").click(function () {
+            $.post('@Url.Action("InsertBulkBySqlBulkCopy", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        // 查询(单表)
+        $("#btnQuerySingleTable").click(function () {
+            $.post('@Url.Action("QuerySingleTable", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        // 查询(多表)
+        $("#btnQueryMultiTable").click(function () {
+            $.post('@Url.Action("QueryMultiTable", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        // 更新
         $("#btnUpdate").click(function () {
             $.post('@Url.Action("Update", "Home")', function (data) {
                 alert(data);
             });
         });
 
-        //单条删除
-        $("#btnSingleDelete").click(function () {
+        // 单条删除
+        $("#btnDeleteSingle").click(function () {
             $.post('@Url.Action("DeleteSingle", "Home")', function (data) {
                 alert(data);
             });
         });
 
-        //批量删除
-        $("#btnBulkDelete").click(function () {
-            $.post('@Url.Action("DeleteBulk", "Home")', function (data) {
+        // 批量删除
+        $("#btnDeleteBatch").click(function () {
+            $.post('@Url.Action("DeleteBatch", "Home")', function (data) {
                 alert(data);
             });
         });
 
-        //事务
-        $("#btnTransaction").click(function () {
-            $.post('@Url.Action("TestTransaction", "Home")', function (data) {
+        // 测试事务
+        $("#btnDoTransaction").click(function () {
+            $.post('@Url.Action("DoTransaction", "Home")', function (data) {
                 alert(data);
             });
         });
 
-        //btnDynamicParametersQuery
-        $("#btnDynamicParametersQuery").click(function () {
-            $.post('@Url.Action("TestDynamicParametersQuery", "Home")', function (data) {
+        // 调用存储过程
+        $("#btnDoStoredProcs").click(function () {
+            $.post('@Url.Action("DoStoredProcs", "Home")', function (data) {
                 alert(data);
             });
         });
 
+        // 多结果集
+        $("#btnMultiResults").click(function () {
+            $.post('@Url.Action("MultiResults", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        // 动态参数
+        $("#btnDoDynamicParameters").click(function () {
+            $.post('@Url.Action("DoDynamicParameters", "Home")', function (data) {
+                alert(data);
+            });
+        });
+
+        // 多数据库查询
+        $("#btnDoMultiDbQuery").click(function () {
+            $.post('@Url.Action("DoMultiDbQuery", "Home")', function (data) {
+                alert(data);
+            });
+        });
 
     });
 
