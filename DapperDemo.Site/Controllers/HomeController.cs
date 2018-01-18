@@ -49,15 +49,23 @@ namespace DapperDemo.Site.Controllers
         {
             var fltOrder = new TFltOrder
             {
-                OrderNo = "201801170003",
+                OrderNo = "201801170002",
                 Status = "TicketIssued",
-                PaymentAmt = 510,
-                CreatedTime = DateTime.Now
+                PaymentAmt = 100
             };
 
             using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
-                conn.Execute(@"INSERT INTO dbo.t_flt_order VALUES ( @OrderNo,@Status ,@PaymentAmt ,@CreatedTime);", fltOrder);
+                conn.Execute(@"INSERT INTO dbo.t_flt_order
+                    (   order_no,
+                        status,
+                        payment_amt
+                    )
+                    VALUES
+                    (   @OrderNo,
+                        @Status,
+                        @PaymentAmt
+                    );", fltOrder);
             }
 
             return Content("OK!");
@@ -71,20 +79,19 @@ namespace DapperDemo.Site.Controllers
         public ActionResult InsertBulkByDefault()
         {
             var fltOrders = new List<TFltOrder>();
-            for (int i = 4; i < 10; i++)
+            for (int i = 2; i < 10; i++)
             {
                 fltOrders.Add(new TFltOrder
                 {
                     OrderNo = "20180117000" + i,
                     Status = "Changed",
-                    PaymentAmt = 1000,
-                    CreatedTime = DateTime.Now
+                    PaymentAmt = 1000
                 });
             }
 
             using (var conn = DapperHelper.CreateDbConnection("DapperDemo1DB"))
             {
-                conn.Execute(@"INSERT INTO dbo.t_flt_order VALUES ( @OrderNo,@Status ,@PaymentAmt ,@CreatedTime);", fltOrders);
+                conn.Execute(@"INSERT INTO dbo.t_flt_order(order_no,status,payment_amt) VALUES ( @OrderNo,@Status ,@PaymentAmt);", fltOrders);
             }
 
             return Content("OK!");
@@ -104,8 +111,7 @@ namespace DapperDemo.Site.Controllers
                 {
                     OrderNo = "2018011700" + i,
                     Status = "TicketIssued",
-                    PaymentAmt = 1100,
-                    CreatedTime = DateTime.Now
+                    PaymentAmt = 1100
                 });
             }
 
@@ -117,7 +123,7 @@ namespace DapperDemo.Site.Controllers
                 using (var sqlbulkcopy = new SqlBulkCopy((SqlConnection)conn))
                 {
                     sqlbulkcopy.BatchSize = fltOrders.Count;
-                    sqlbulkcopy.DestinationTableName = "t_flt_order";//tableName
+                    sqlbulkcopy.DestinationTableName = dt.TableName;//tableName
                     for (var i = 0; i < dt.Columns.Count; i++)
                     {
                         sqlbulkcopy.ColumnMappings.Add(dt.Columns[i].ColumnName, dt.Columns[i].ColumnName);
@@ -267,7 +273,7 @@ namespace DapperDemo.Site.Controllers
             }
 
             return Content("OK!");
-        } 
+        }
         #endregion
 
         /// <summary>
@@ -328,12 +334,12 @@ SELECT order_id AS OrderId, passenger_name AS PassengerName, passenger_gender AS
         {
             using (var conn = DapperHelper.CreateDbConnection("DapperDemo2DB"))
             {
-                var query = conn.Query<TFltOrder>(@"SELECT order_no AS OrderNo,payment_amt AS PaymentAmt, created_time AS CreatedTime, * FROM dbo.t_flt_order WHERE order_no= @OrderNo;", new { @OrderNo= "201801170002" });
+                var query = conn.Query<TFltOrder>(@"SELECT order_no AS OrderNo,payment_amt AS PaymentAmt, created_time AS CreatedTime, * FROM dbo.t_flt_order WHERE order_no= @OrderNo;", new { @OrderNo = "201801170002" });
                 var fltOrder = query.FirstOrDefault();
             }
 
             return Content("OK!");
         }
-        
+
     }
 }

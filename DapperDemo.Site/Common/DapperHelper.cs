@@ -82,7 +82,14 @@ namespace DapperDemo.Site.Common
                 cols.Add(new DataColumn(columnName, targetType));
             }
 
-            DataTable dt = new DataTable();
+            var tableName = type.Name;
+            var tableAttribute= Attribute.GetCustomAttribute(type, typeof(TableAttribute));
+            if (tableAttribute!= null)
+            {
+                var t = tableAttribute as TableAttribute;
+                tableName = t.TableName;
+            }
+            DataTable dt = new DataTable(tableName);
             dt.Columns.AddRange(cols.ToArray());
 
             list.ForEach((l) =>

@@ -47,6 +47,8 @@ namespace DapperDemo.Site.Models
 		/// </summary>
 		[Column("created_time")] 
 		public DateTime? CreatedTime { get; set; }
+
+        public string Remark { get; set; }
 		
 	}
 }
